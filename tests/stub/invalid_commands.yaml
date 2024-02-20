@@ -1,0 +1,6 @@
+name: Pre-commit hook
+description: Pre-commit hook parallel execution
+globalEnvFile: null
+globalEnv:
+  XDEBUG_MODE: off
+commands: null

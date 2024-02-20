@@ -1,0 +1,115 @@
+##########################
+####### TEMPLATES #########
+##########################
+phpstan: &phpstan
+  cmd:
+    - "%php_cmd%"
+    - "-dmemory_limit=-1"
+    - "./vendor/bin/phpstan"
+    - analyse
+    - "-cphpstan.neon"
+  includeFiles: true
+  reverseOutput: true
+
+phpcs: &phpcs
+  error_msg: Php code sniffer failed
+  timeout: 180
+  cmd:
+    - "%composer_cmd%"
+    - phpcs
+  includeFiles: true
+
+##########################
+####### END TEMPLATES #####
+##########################
+
+name: Pre-commit hook
+description: Pre-commit hook parallel execution
+globalEnvFile: null
+globalEnv:
+  XDEBUG_MODE: off
+commands:
+##########################
+####### PHPSTAN BEGIN #####
+##########################
+  phpstan-src:
+    <<: *phpstan
+    name: Static Analyzer src folder
+    includeFilesPattern:
+      php: src
+
+  phpstan-tools:
+    <<: *phpstan
+    name: Static Analyzer tools folder
+    includeFilesPattern:
+      php: tools
+
+  phpstan-tests:
+    <<: *phpstan
+    name: Static Analyzer tests folder
+    includeFilesPattern:
+      php: tests
+##########################
+####### PHPSTAN END #######
+##########################
+
+##########################
+####### PHPCS BEGIN ########
+##########################
+  phpcs-src:
+    <<: *phpcs
+    name: Code style src folder
+    description: Run php code sniffer for src
+    includeFilesPattern:
+      php: src
+
+  phpcs-tools:
+    <<: *phpcs
+    name: Code style tools folder
+    description: Run php code sniffer for tools
+    includeFilesPattern:
+      php: tools
+
+  phpcs-tests:
+    <<: *phpcs
+    name: Code style tests folder
+    description: Run php code sniffer for tests
+    includeFilesPattern:
+      php: tests
+##########################
+####### PHPCS END #########
+##########################
+
+##########################
+####### TESTS BEGIN ########
+##########################
+
+#  behat:
+#    name: Tests
+#    cmd:
+#      - "%composer_cmd%"
+#      - tests
+#    envFile: null
+#    reverseOutput: false
+##########################
+####### TESTS END  #########
+##########################
+
+##########################
+#### DEPTRAC BEGIN ########
+##########################
+  deptrac:
+    name: DepTrac
+    description: Check layers dependency
+    cmd:
+      - "%composer_cmd%"
+      - deptrac
+    envFile: null
+    includeFiles: true
+    forceDisableAttachArgs: true
+    includeFilesPattern:
+      php: src
+    reverseOutput: false
+##########################
+#### DEPTRACK END #########
+##########################

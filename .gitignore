@@ -1,0 +1,25 @@
+### PHPUnit template
+# Covers PHPUnit
+# Reference: https://phpunit.de/
+
+# Generated files
+.phpunit.result.cache
+.phpunit.cache
+
+# PHPUnit
+/phpunit.xml
+
+# Build data
+/build/
+
+### PHPCodeSniffer template
+# CodeSniffer
+phpcs.xml
+
+/vendor/*
+/wpcs/*
+
+/composer.lock
+/phpstan.neon
+/*cache*
+/coverage
