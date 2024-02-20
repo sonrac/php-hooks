@@ -54,7 +54,7 @@ final class HookCommand extends Command
             'c',
             InputOption::VALUE_OPTIONAL,
             'Path to the configuration file',
-            __DIR__ . '/../../config/pre-commit-hook.yaml',
+            __DIR__ . '/../../config/hook.yaml',
         );
         $this->addOption(
             'project-dir',

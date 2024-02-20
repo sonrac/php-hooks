@@ -1,8 +1,6 @@
 # Create additional custom commands
 
-Create config file in your project
-
-with next structure 
+Create config file in your project with next structure 
 
 ```php
 <?php

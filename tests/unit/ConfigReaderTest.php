@@ -82,7 +82,7 @@ final class ConfigReaderTest extends TestCase
         parent::setUp();
 
         $this->configReader = new ConfigReader(
-            __DIR__ . '/../../config/pre-commit-hook.yaml',
+            __DIR__ . '/../../config/hook.yaml',
             new ConfigVariablesFormatter(),
         );
     }

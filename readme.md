@@ -8,7 +8,7 @@ Hook commands are launched in parallel and due to parallelization the hook works
 
 * Copy config
 ```shell
-cp vendor/sonrac/git-hook-runner/config/pre-commit-hook.yaml /<path-to-source-root>/<path-to-new-location-config>
+cp vendor/sonrac/git-hook-runner/config/hook.yaml /<path-to-source-root>/<path-to-new-location-config>
 ```
 
 * Edit hook configuration. Full options list see [here](docs/config-options.md)
@@ -73,17 +73,17 @@ php ../../vendor/bin/hook hook -p  <path-to-source-root> -c <path-to-new-locatio
 * Git execute rights for git hook
 
 ```shell
-chmod +x .git/hook/<pre-commit-hook-file-name>
+chmod +x .git/hook/<git-hook-file-name>
 ```
 
 ## Disable hook for commit
 
 Uncheck checkbox in commit modal dialogue 
-if you need commit without pre-commit hook checks
+if you need commit without hook runner checks
 
 ![img.png](docs/img/disable-in-modal-dialogue.png)
 
 ## Usefully Links
 
-* [Pre-commit hook description](docs/overview.md)
-* [Pre-commit hook runner config](docs/config-options.md)
+* [Hook runner overview](docs/overview.md)
+* [Hook runner config](docs/config-options.md)

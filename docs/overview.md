@@ -1,21 +1,18 @@
-# Pre commit hook
+# Git hook runner overview
 
-For local check we can use pre-commit-hook before commit.
-
-During checks we can check:
+Git hook runner can run next checks:
 
 * Code style
 * Run static analyzer
 * Run tests
 * etc.
 
-Example hook script for this package you can see [here](../../scripts/hooks/_pre-commit.docker.sh)
+Example hook script for this package you can see [here](../bin/pre-commit.sh)
 
 Hook starts only for modified files not for whole project if it possible.
 Some checks we can not start only for some files such as deptrac
 
-All check started parallel for execution speed up. 
-We use [pcntl php ext](https://www.php.net/manual/en/book.pcntl.php) for this.
+All check started parallel for execution speed up.
 
 ## Hook steps
 
@@ -71,5 +68,5 @@ _________________________________________
 │ Code style tests folder      │   √    │
 │ DepTrac                      │   √    │
 └──────────────────────────────┴────────┘
- [OK] Pre hook commit run successfully    
+ [OK] Hook run successfully   
 ```

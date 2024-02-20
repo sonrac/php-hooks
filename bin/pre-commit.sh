@@ -46,5 +46,5 @@ if [ ! -z "$BEAUTIFIED_FILES" ]; then
   git add $BEAUTIFIED_FILES
 fi
 
-__docker_cmd_runner php bin/hook hook -c config/pre-commit-hook.yaml -p /app ${CHANGED_FILES}
+__docker_cmd_runner php bin/hook hook -c config/hook.yaml -p /app ${CHANGED_FILES}
 
