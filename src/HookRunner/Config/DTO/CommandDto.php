@@ -2,25 +2,36 @@
 
 declare(strict_types=1);
 
-namespace Sonrac\Tools\PreCommitHook\PreCommitHookRunner\Config\DTO;
+namespace Sonrac\Tools\PhpHook\HookRunner\Config\DTO;
 
-use Sonrac\Tools\PreCommitHook\PreCommitHookRunner\Config\Env\EnvVariables;
-use Sonrac\Tools\PreCommitHook\PreCommitHookRunner\Utils\CommandProcess;
+use Sonrac\Tools\PhpHook\HookRunner\Config\Env\EnvVariables;
+use Sonrac\Tools\PhpHook\HookRunner\Utils\CommandProcess;
 
 final class CommandDto
 {
     private string $name;
     private string $description;
     private ?string $errorMsg;
+
+    /**
+     * @var string[]
+     */
     private array $cmd;
     private EnvVariables $env;
     private bool $reverseOutput;
     private bool $includeFiles = false;
+    /**
+     * @var array<string, string>
+     */
     private array $includeFilesPatterns = [];
     private bool $forceDisableAttachArgs = false;
     private int $timeout = CommandProcess::DEFAULT_TIMEOUT;
     private ?string $cwd = null;
 
+    /**
+     * @param string[] $cmd
+     * @param array<string, string> $includeFilesPatterns
+     */
     public function __construct(
         string $name,
         string $description,
@@ -64,6 +75,9 @@ final class CommandDto
         return $this->errorMsg;
     }
 
+    /**
+     * @return string[]
+     */
     public function getCmd(): array
     {
         return $this->cmd;
@@ -84,6 +98,9 @@ final class CommandDto
         return $this->includeFiles;
     }
 
+    /**
+     * @return array<string, string>
+     */
     public function getIncludeFilesPatterns(): array
     {
         return $this->includeFilesPatterns;

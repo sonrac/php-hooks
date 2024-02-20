@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace Sonrac\Tools\PreCommitHook\PreCommitHookRunner\Definition;
+namespace Sonrac\Tools\PhpHook\HookRunner\Definition;
 
-use Sonrac\Tools\PreCommitHook\PreCommitHookRunner\Config\DTO\CommandDto;
+use Sonrac\Tools\PhpHook\HookRunner\Config\DTO\CommandDto;
 
 final class CommandDefinition
 {

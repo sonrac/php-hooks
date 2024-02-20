@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace Sonrac\Tools\PreCommitHook\PreCommitHookRunner\Config;
+namespace Sonrac\Tools\PhpHook\HookRunner\Config;
 
-use Sonrac\Tools\PreCommitHook\PreCommitHookRunner\Config\DTO\CommandDto;
-use Sonrac\Tools\PreCommitHook\PreCommitHookRunner\Config\DTO\PreCommitHookDto;
-use Sonrac\Tools\PreCommitHook\PreCommitHookRunner\Config\Env\EnvVariablesFormatter;
+use Sonrac\Tools\PhpHook\HookRunner\Config\DTO\CommandDto;
+use Sonrac\Tools\PhpHook\HookRunner\Config\DTO\PreCommitHookDto;
+use Sonrac\Tools\PhpHook\HookRunner\Config\Env\EnvVariablesFormatter;
 
 final class ConfigBuilder
 {
@@ -18,12 +18,16 @@ final class ConfigBuilder
         $this->configReader = $configReader;
     }
 
-    public function build(): PreCommitHookDto
+    public function build(?string $configFile = null): PreCommitHookDto
     {
+        if (null !== $configFile) {
+            $this->configReader->changeConfigFile($configFile);
+        }
+
         $config = $this->configReader->readMainSection();
 
         $envVarFormatter = new EnvVariablesFormatter(
-            $config[ConfigReader::GLOBAL_ENV] ?? [],
+            $config[ConfigReader::GLOBAL_ENV],
             $config[ConfigReader::GLOBAL_ENV_FILE] ?? null,
         );
 
@@ -40,7 +44,7 @@ final class ConfigBuilder
      *      name: string,
      *      description: string,
      *      errorMsg: ?string,
-     *      cmd: array<int, string>,
+     *      cmd: array<string, string>,
      *      envFile: ?string,
      *      env: array<string, string|int|bool|float|null>,
      *      reverseOutput: bool,
@@ -48,7 +52,7 @@ final class ConfigBuilder
      *      cwd: ?string,
      *      includeFiles: bool,
      *      forceDisableAttachArgs: bool,
-     *      includeFilesPattern: string[],
+     *      includeFilesPattern: ?array<string, string>,
      *  }> $commands
      *
      * @return CommandDto[]
@@ -66,7 +70,7 @@ final class ConfigBuilder
                 $envVarsFormatter->formatEnv(
                     $nextCmd[ConfigReader::COMMANDS_ENV],
                     $nextCmd[ConfigReader::COMMANDS_ENV_FILE],
-                    false
+                    false,
                 ),
                 $nextCmd[ConfigReader::COMMANDS_REVERSE_OUTPUT],
                 $nextCmd[ConfigReader::COMMANDS_INCLUDE_FILES],
@@ -78,5 +82,19 @@ final class ConfigBuilder
         }
 
         return $cmdDtos;
+    }
+
+    public function changeProjectDir(string $projectDir, ?string $configFile): void
+    {
+        $envFormatter = $this->configReader->getFormatter();
+        $envFormatter = new ConfigVariablesFormatter(
+            $projectDir,
+            $envFormatter->getVariables(),
+        );
+
+        $this->configReader = new ConfigReader(
+            $configFile ?? $this->configReader->getConfigFile(),
+            $envFormatter,
+        );
     }
 }

@@ -1,0 +1,9 @@
+services:
+  php:
+    image: php:7.4-fpm-alpine
+    working_dir: /app
+    # pecl install xdebug-3.1.6
+    volumes:
+      - ./:/app
+    ports:
+      - 33263:33263

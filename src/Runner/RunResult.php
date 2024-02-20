@@ -2,23 +2,45 @@
 
 declare(strict_types=1);
 
-namespace App\Tools\Runner;
+namespace Sonrac\Tools\PhpHook\Runner;
 
-use App\Tools\Runner\Process\AbstractProcess;
-use App\Tools\Runner\Process\ProcessTimeMetricInterface;
+use Sonrac\Tools\PhpHook\Runner\Process\AbstractProcess;
+use Sonrac\Tools\PhpHook\Runner\Process\ProcessTimeMetricInterface;
 
-final readonly class RunResult
+final class RunResult
 {
     /**
      * @var AbstractProcess[]
      */
-    public array $processes;
+    private array $processes;
+    private ProcessTimeMetricInterface $processTimeMetric;
+    private bool $isSuccessfully;
 
     public function __construct(
-        public ProcessTimeMetricInterface $processTimeMetric,
-        public bool $isSuccessfully,
+        ProcessTimeMetricInterface $processTimeMetric,
+        bool $isSuccessfully,
         AbstractProcess ...$process
     ) {
+        $this->isSuccessfully = $isSuccessfully;
+        $this->processTimeMetric = $processTimeMetric;
         $this->processes = $process;
+    }
+
+    /**
+     * @return AbstractProcess[]
+     */
+    public function getProcesses(): array
+    {
+        return $this->processes;
+    }
+
+    public function getProcessTimeMetric(): ProcessTimeMetricInterface
+    {
+        return $this->processTimeMetric;
+    }
+
+    public function isSuccessfully(): bool
+    {
+        return $this->isSuccessfully;
     }
 }

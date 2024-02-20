@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Tools\Runner\Process;
+namespace Sonrac\Tools\PhpHook\Runner\Process;
 
 interface ProcessTimeMetricInterface
 {

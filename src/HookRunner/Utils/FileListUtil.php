@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Sonrac\Tools\PreCommitHook\PreCommitHookRunner\Utils;
+namespace Sonrac\Tools\PhpHook\HookRunner\Utils;
 
 use const PATHINFO_EXTENSION;
 
@@ -52,8 +52,8 @@ final class FileListUtil
                     $nextFile = sprintf('%s/%s', $this->baseDir, $nextFile);
 
                     return strtolower($neededExt) === strtolower($ext) && is_file($nextFile);
-                }
-            )
+                },
+            ),
         );
     }
 
@@ -67,8 +67,8 @@ final class FileListUtil
      */
     public function getFilesListByPattern(string $pattern, ?string $extension = null): array
     {
-        if (isset($this->cachedFiles[$pattern.$extension])) {
-            return $this->cachedFiles[$pattern.$extension];
+        if (isset($this->cachedFiles[$pattern . $extension])) {
+            return $this->cachedFiles[$pattern . $extension];
         }
 
         $files = [];

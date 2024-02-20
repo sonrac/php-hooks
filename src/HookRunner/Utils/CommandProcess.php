@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace Sonrac\Tools\PreCommitHook\PreCommitHookRunner\Utils;
+namespace Sonrac\Tools\PhpHook\HookRunner\Utils;
 
-use Sonrac\Tools\PreCommitHook\PreCommitHookRunner\Definition\CommandDefinition;
-use Sonrac\Tools\PreCommitHook\Runner\Process\AbstractProcess;
-use Sonrac\Tools\PreCommitHook\Runner\Process\ProcessTimeMetricInterface;
+use Sonrac\Tools\PhpHook\HookRunner\Definition\CommandDefinition;
+use Sonrac\Tools\PhpHook\Runner\Process\AbstractProcess;
+use Sonrac\Tools\PhpHook\Runner\Process\ProcessTimeMetricInterface;
 
 final class CommandProcess extends AbstractProcess
 {

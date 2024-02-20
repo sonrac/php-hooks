@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace Sonrac\Tools\PreCommitHook\PreCommitHookRunner\Config;
+namespace Sonrac\Tools\PhpHook\HookRunner\Config;
 
-use Sonrac\Tools\PreCommitHook\PreCommitHookRunner\Utils\CommandProcess;
 use InvalidArgumentException;
 use RuntimeException;
+use Sonrac\Tools\PhpHook\HookRunner\Utils\CommandProcess;
 use Symfony\Component\Yaml\Yaml;
 
 final class ConfigReader
@@ -30,26 +30,26 @@ final class ConfigReader
     public const COMMANDS_FORCE_DISABLE_ATTACH_ARGS = 'forceDisableAttachArgs';
 
     /**
-     * @var array<string|int, string|int|bool|float|null>
+     * @var array<string|int, string|int|bool|float|null|array<int|string, string>>
      */
     private array $config;
-    private string $configPath;
+    private string $configFile;
     private ConfigVariablesFormatter $configVariablesFormatter;
 
     public function __construct(
-        string $configPath,
+        string $configFile,
         ConfigVariablesFormatter $configVariablesFormatter
     ) {
         $this->configVariablesFormatter = $configVariablesFormatter;
-        $this->configPath = $configPath;
-        if (!file_exists($this->configPath)) {
+        $this->configFile = $configFile;
+        if (!file_exists($this->configFile)) {
             throw new InvalidArgumentException(
-                sprintf("Config %s does not exists", $this->configPath),
+                sprintf("Config %s does not exists", $this->configFile),
             );
         }
 
-        /** @var array<string|int, string|int|bool|float|null> $data */
-        $data = Yaml::parseFile($this->configPath);
+        /** @var array<string|int, string|int|bool|float|null|array<int|string, string>> $data */
+        $data = Yaml::parseFile($this->configFile);
 
         $this->config = $this->configVariablesFormatter->format($data);
     }
@@ -64,7 +64,7 @@ final class ConfigReader
      *          name: string,
      *          description: string,
      *          errorMsg: ?string,
-     *          cmd: array<int, string>,
+     *          cmd: array<string, string>,
      *          envFile: ?string,
      *          env: array<string, int|bool|string|float|null>,
      *          reverseOutput: bool,
@@ -72,7 +72,7 @@ final class ConfigReader
      *          cwd: ?string,
      *          includeFiles: bool,
      *          forceDisableAttachArgs: bool,
-     *          includeFilesPattern: array<string|int, string>,
+     *          includeFilesPattern: ?array<string, string>,
      *      }>
      * }
      */
@@ -82,12 +82,56 @@ final class ConfigReader
         $globalEnv = $this->config[self::GLOBAL_ENV] ?? [];
 
         return [
-            self::NAME => (string)($this->config[self::NAME] ?? ''),
-            self::DESCRIPTION => (string)($this->config[self::DESCRIPTION] ?? ''),
+            self::NAME => $this->getString($this->config, self::NAME),
+            self::DESCRIPTION => $this->getStringOrNull($this->config, self::DESCRIPTION) ?? '',
             self::GLOBAL_ENV => $globalEnv,
-            self::GLOBAL_ENV_FILE => $this->getStringOrNull($this->config, self::GLOBAL_ENV_FILE, null),
+            self::GLOBAL_ENV_FILE => $this->getStringOrNull($this->config, self::GLOBAL_ENV_FILE),
             self::COMMANDS => $this->readCommands(),
         ];
+    }
+
+    /**
+     * phpcs:disable Generic.Files.LineLength.TooLong
+     * @param array<int|string, array<int|string, string>|bool|float|int|string|null>|array<string, array<string, bool|float|int|string|null>|bool|int|string|null> $config
+     * phpcs:enable Generic.Files.LineLength.TooLong
+     */
+    private function getString(array $config, string $key): string
+    {
+        if (!array_key_exists($key, $config)) {
+            return '';
+        }
+
+        $data = $config[$key];
+
+        if (null === $data) {
+            return '';
+        }
+
+        assert(is_string($data));
+
+        return $data;
+    }
+
+    /**
+     * phpcs:disable Generic.Files.LineLength.TooLong
+     * @param array<int|string, array<int|string, string>|bool|float|int|string|null>|array<string, array<string, bool|float|int|string|null>|bool|int|string|null> $config
+     * phpcs:enable Generic.Files.LineLength.TooLong
+     */
+    private function getStringOrNull(array $config, string $key, ?string $defValue = null): ?string
+    {
+        if (!array_key_exists($key, $config)) {
+            return $defValue;
+        }
+
+        $data = $config[$key];
+
+        if (null === $data) {
+            return $defValue;
+        }
+
+        assert(is_string($data));
+
+        return $data;
     }
 
     /**
@@ -95,7 +139,7 @@ final class ConfigReader
      *     name: string,
      *     description: string,
      *     errorMsg: ?string,
-     *     cmd: array<int, string>,
+     *     cmd: array<string, string>,
      *     envFile: ?string,
      *     env: array<string, int|bool|string|float|null>,
      *     reverseOutput: bool,
@@ -103,7 +147,7 @@ final class ConfigReader
      *     cwd: ?string,
      *     includeFiles: bool,
      *     forceDisableAttachArgs: bool,
-     *     includeFilesPattern: array<string|int, string>,
+     *     includeFilesPattern: ?array<string, string>,
      * }>
      */
     public function readCommands(): array
@@ -118,6 +162,21 @@ final class ConfigReader
 
         $commands = [];
         foreach ($this->config[self::COMMANDS] as $nextCommandConfig) {
+            /** @var array{
+             *      name: ?string,
+             *      description: ?string,
+             *      errorMsg: ?string,
+             *      cmd: ?array<string, string>,
+             *      envFile: ?string,
+             *      env: ?array<string, int|bool|string|float|null>,
+             *      reverseOutput: ?bool,
+             *      timeout: ?int,
+             *      cwd: ?string,
+             *      includeFiles: ?bool,
+             *      forceDisableAttachArgs: ?bool,
+             *      includeFilesPattern: ?array<string, string>,
+             * } $nextCommandConfig
+             */
             if (
                 !is_array($nextCommandConfig[self::COMMANDS_CMD]) ||
                 0 === count($nextCommandConfig[self::COMMANDS_CMD])
@@ -127,9 +186,10 @@ final class ConfigReader
 
             /** @var array<string, string|int|bool|float|null> $env */
             $env = $this->config[self::COMMANDS_ENV] ?? [];
+            assert(array_key_exists(self::COMMANDS_CMD, $nextCommandConfig));
             /** @var string[] $cmd */
             $cmd = $nextCommandConfig[self::COMMANDS_CMD];
-            /** @var array<string|int, string> $filePatterns */
+            /** @var array<string, string> $filePatterns */
             $filePatterns = $nextCommandConfig[self::COMMANDS_FILES_PATTERN] ?? [];
 
             $commands[] = [
@@ -152,7 +212,7 @@ final class ConfigReader
                 self::COMMANDS_FORCE_DISABLE_ATTACH_ARGS => $this->getBool(
                     $nextCommandConfig,
                     self::COMMANDS_FORCE_DISABLE_ATTACH_ARGS,
-                    true,
+                    false,
                 ),
                 self::COMMANDS_FILES_PATTERN => $filePatterns,
             ];
@@ -162,47 +222,7 @@ final class ConfigReader
     }
 
     /**
-     * @param array<string|int, string|int|bool|float|null> $config
-     */
-    private function getString(array $config, string $key): string
-    {
-        if (!array_key_exists($key, $config)) {
-            return '';
-        }
-
-        $data = $config[$key];
-
-        if (null === $data) {
-            return '';
-        }
-
-        assert(is_string($data));
-
-        return $data;
-    }
-
-    /**
-     * @param array<string|int, string|int|bool|float|null> $config
-     */
-    private function getStringOrNull(array $config, string $key, ?string $defValue = null): ?string
-    {
-        if (!array_key_exists($key, $config)) {
-            return $defValue;
-        }
-
-        $data = $config[$key];
-
-        if (null === $data) {
-            return $defValue;
-        }
-
-        assert(is_string($data));
-
-        return $data;
-    }
-
-    /**
-     * @param array<string|int, string|int|bool|float|null> $config
+     * @param array<string, array<string, bool|float|int|string|null>|bool|int|string|null> $config
      */
     private function getBool(array $config, string $key, bool $defValue): bool
     {
@@ -219,5 +239,20 @@ final class ConfigReader
         assert(is_bool($data));
 
         return $data;
+    }
+
+    public function getFormatter(): ConfigVariablesFormatter
+    {
+        return $this->configVariablesFormatter;
+    }
+
+    public function getConfigFile(): string
+    {
+        return $this->configFile;
+    }
+
+    public function changeConfigFile(string $configFile): void
+    {
+        $this->configFile = $configFile;
     }
 }

@@ -5,9 +5,9 @@ Every string element in config can use 3 template variables
 
 | Variable       | Description                                                                 |
 |----------------|-----------------------------------------------------------------------------|
-| %php_cmd%      | Php binary full path. Don't use relative path to php in this tool           |
-| %composer_cmd% | Composer binary full path. Don't use relative path to composer in this tool |
-| %project_dir%  | Project root dir                                                            |
+| {php_cmd}      | Php binary full path. Don't use relative path to php in this tool           |
+| {composer_cmd} | Composer binary full path. Don't use relative path to composer in this tool |
+| {project_dir}  | Project root dir                                                            |
 
 ### Example 
 
@@ -19,7 +19,7 @@ composer deptrac
 
 ```yaml
 # We use variable in title.
-name: "Pre-commit hook. Started in %project_dir%"
+name: "Pre-commit hook. Started in {project_dir}"
 description: Pre-commit hook parallel execution
 globalEnvFile: null
 globalEnv:
@@ -30,7 +30,7 @@ commands:
     description: Check layers dependency
     cmd:
       # Using variable in commands.
-      - "%composer_cmd%"
+      - "{composer_cmd}"
       - deptrac
     envFile: null
     includeFilesPattern:
@@ -110,7 +110,7 @@ commands:
 
 ```yaml
 cmd:
-    - "%php_cmd%"
+    - "{php_cmd}"
     - "-dmemory_limit=-1"
     - "./vendor/bin/phpstan"
     - analyse
@@ -182,7 +182,7 @@ cmd:
 
 ```yaml
 # We use variable in title.
-name: "Pre-commit hook. Started in %project_dir%"
+name: "Pre-commit hook. Started in {project_dir}"
 description: Pre-commit hook parallel execution
 globalEnvFile: null
 globalEnv:
@@ -192,7 +192,7 @@ commands:
     name: Phpstan all
     description: Phpstan for whole project
     cmd:
-        - "%php_cmd%"
+        - "{php_cmd}"
         - "-dmemory_limit=-1"
         - "./vendor/bin/phpstan"
         - analyse
@@ -206,7 +206,7 @@ commands:
 
 ```yaml
 # We use variable in title.
-name: "Pre-commit hook. Started in %project_dir%"
+name: "Pre-commit hook. Started in {project_dir}"
 description: Pre-commit hook parallel execution
 globalEnvFile: null
 globalEnv:
@@ -216,7 +216,7 @@ commands:
     name: Phpstan tools
     description: Phpstan for tools directory
     cmd:
-        - "%php_cmd%"
+        - "{php_cmd}"
         - "-dmemory_limit=-1"
         - "./vendor/bin/phpstan"
         - analyse

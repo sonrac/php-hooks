@@ -1,0 +1,107 @@
+name: CI
+
+on: [pull_request]
+
+jobs:
+  ci-php-8:
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        php-version:
+          - "8.2"
+          - "8.3"
+        symfony-version:
+          - "5.4"
+          - "6.4"
+          - "7"
+
+    steps:
+      - name: "Checkout"
+        uses: actions/checkout@v4
+
+      - name: "Install PHP"
+        uses: "shivammathur/setup-php@v2"
+        with:
+          coverage: "none"
+          php-version: "${{ matrix.php-version }}"
+          ini-file: development
+          extensions: mbstring, pcntl
+
+      - name: "Install dependencies"
+        run: |
+          composer require --no-suggest --no-interaction --no-progress "symfony/yaml:${{ matrix.symfony-version }}" \
+                                         "symfony/dependency-injection:${{ matrix.symfony-version }}" \
+                                         "symfony/console:${{ matrix.symfony-version }}" \
+                                         "symfony/process:${{ matrix.symfony-version }}" \
+                                         "symfony/config:${{ matrix.symfony-version }}" \
+                                         "phpunit/phpunit" \
+                                         "phpstan/phpstan" \
+                                         "slevomat/coding-standard" \
+                                         "squizlabs/php_codesniffer" -W
+
+      - name: "Code style"
+        run: |
+          cp phpcs.xml.dist phpcs.xml
+          ./vendor/bin/phpcs
+
+      - name: "Static analyser"
+        run: |
+          cp phpstan.neon.dist phpstan.neon
+          ./vendor/bin/phpstan
+
+      - name: "Tests"
+        run: |
+          cp phpunit.xml.dist phpunit.xml
+          ./vendor/bin/phpunit
+
+  ci-php-74:
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        php-version:
+          - "7.4"
+        symfony-version:
+          - "5.4"
+
+    steps:
+      - name: "Checkout"
+        uses: actions/checkout@v4
+
+      - name: "Install PHP"
+        uses: "shivammathur/setup-php@v2"
+        with:
+          coverage: "none"
+          php-version: "${{ matrix.php-version }}"
+          ini-file: development
+          extensions: mbstring, pcntl
+
+      - name: "Install dependencies"
+        run: |
+          composer require --no-suggest --no-interaction --no-progress "symfony/yaml:${{ matrix.symfony-version }}" \
+                                         "symfony/dependency-injection:${{ matrix.symfony-version }}" \
+                                         "symfony/console:${{ matrix.symfony-version }}" \
+                                         "symfony/process:${{ matrix.symfony-version }}" \
+                                         "symfony/config:${{ matrix.symfony-version }}" \
+                                         "phpunit/phpunit" \
+                                         "phpstan/phpstan" \
+                                         "slevomat/coding-standard" \
+                                         "squizlabs/php_codesniffer" -W
+
+      - name: "Code style"
+        run: |
+          cp phpcs.xml.dist phpcs.xml
+          ./vendor/bin/phpcs
+
+      - name: "Static analyser"
+        run: |
+          cp phpstan.neon.dist phpstan.neon
+          ./vendor/bin/phpstan
+
+      - name: "Tests"
+        run: |
+          cp phpunit.xml.dist phpunit.xml
+          ./vendor/bin/phpunit
