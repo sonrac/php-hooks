@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace Sonrac\Tools\PreCommitHook\PreCommitHookRunner\Config\DTO;
+namespace Sonrac\Tools\PhpHook\HookRunner\Config\DTO;
 
-use Sonrac\Tools\PreCommitHook\PreCommitHookRunner\Config\Env\EnvVariables;
+use Sonrac\Tools\PhpHook\HookRunner\Config\Env\EnvVariables;
 
 final class PreCommitHookDto
 {

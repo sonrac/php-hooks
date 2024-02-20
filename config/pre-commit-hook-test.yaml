@@ -72,23 +72,3 @@ commands:
   ##########################
   ####### PHPCS END #########
   ##########################
-
-  ##########################
-####### TESTS BEGIN ########
-##########################
-  tests:
-    name: Tests
-    description: Run tests
-    cmd:
-      - "{php_cmd}"
-      - "-dmemory_limit=-1"
-      - "./vendor/bin/phpunit"
-    includeFiles: true
-    forceDisableAttachArgs: true
-    includeFilesPattern:
-      tests: php
-      src: php
-
-##########################
-####### TESTS END #########
-##########################

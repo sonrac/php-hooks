@@ -9,7 +9,7 @@ During checks we can check:
 * Run tests
 * etc.
 
-Hook script you can see [here](../../scripts/hooks/_pre-commit.docker.sh)
+Example hook script for this package you can see [here](../../scripts/hooks/_pre-commit.docker.sh)
 
 Hook starts only for modified files not for whole project if it possible.
 Some checks we can not start only for some files such as deptrac

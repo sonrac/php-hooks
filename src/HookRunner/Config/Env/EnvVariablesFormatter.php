@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Sonrac\Tools\PreCommitHook\PreCommitHookRunner\Config\Env;
+namespace Sonrac\Tools\PhpHook\HookRunner\Config\Env;
 
 use InvalidArgumentException;
 use RuntimeException;

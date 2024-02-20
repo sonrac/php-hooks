@@ -2,15 +2,17 @@
 
 declare(strict_types=1);
 
-namespace Sonrac\Tools\PreCommitHook\PreCommitHookRunner\Output;
+namespace Sonrac\Tools\PhpHook\HookRunner\Output;
 
-use Sonrac\Tools\PreCommitHook\PreCommitHookRunner\Utils\CommandProcess;
+use Sonrac\Tools\PhpHook\HookRunner\Utils\CommandProcess;
+use Sonrac\Tools\PhpHook\Runner\Process\AbstractProcess;
+use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Style\SymfonyStyle;
 
 final class ResultRenderer
 {
     /**
-     * @var CommandProcess[]
+     * @var AbstractProcess[]
      */
     private array $processes;
     private ResultTable $resultTable;
@@ -18,7 +20,7 @@ final class ResultRenderer
 
     public function __construct(
         SymfonyStyle $style,
-        CommandProcess ...$process
+        AbstractProcess ...$process
     ) {
         $this->style = $style;
         $this->processes = $process;
@@ -32,6 +34,23 @@ final class ResultRenderer
         );
     }
 
+    /**
+     * @return array<string, int>
+     */
+    private function getCommandsMap(): array
+    {
+        $commandsMap = [];
+
+        foreach ($this->processes as $process) {
+            assert($process instanceof CommandProcess);
+            $commandName = $process->getDefinition()->getName();
+
+            $commandsMap[$commandName] = $process->getProcess()->getExitCode() ?? Command::SUCCESS;
+        }
+
+        return $commandsMap;
+    }
+
     public function renderErrors(): bool
     {
         $hasErrors = false;
@@ -43,27 +62,15 @@ final class ResultRenderer
             $hasErrors = true;
 
             $this->style->error([
-                'Command: ' . $process->getCommand(),
-                $process->getProcess()->getOutput(),
+                '_________________________________________',
+                'Command name: ' . $process->getName(),
+                'Command shell: ' . implode(' ', $process->getStartCommand()),
+                $process->getOutput(),
+                $process->getErrorOutput(),
+                '_________________________________________',
             ]);
         }
 
         return $hasErrors;
-    }
-
-    /**
-     * @return array<string, int>
-     */
-    private function getCommandsMap(): array
-    {
-        $commandsMap = [];
-
-        foreach ($this->processes as $process) {
-            $commandName = $process->getDefinition()->getName();
-
-            $commandsMap[$commandName] = $process->getProcess()->getExitCode();
-        }
-
-        return $commandsMap;
     }
 }

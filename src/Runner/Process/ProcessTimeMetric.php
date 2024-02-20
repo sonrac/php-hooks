@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Tools\Runner\Process;
+namespace Sonrac\Tools\PhpHook\Runner\Process;
 
 use RuntimeException;
 
@@ -15,7 +15,7 @@ final class ProcessTimeMetric implements ProcessTimeMetricInterface
     private bool $isFinished = false;
 
     public function __construct(
-        ?float $started = null,
+        ?float $started = null
     ) {
         $this->started = $started ?? microtime(true);
     }

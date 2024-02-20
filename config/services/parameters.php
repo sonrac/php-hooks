@@ -2,9 +2,18 @@
 
 declare(strict_types=1);
 
-use Symfony\Component\DependencyInjection\ContainerInterface;
+use Symfony\Component\DependencyInjection\ContainerBuilder;
 
-return static function(ContainerInterface  $container): void
-{
-    $container->setParameter('project_dir', __DIR__.'/../');
+return static function (ContainerBuilder $container): void {
+    $container->setParameter(
+        'projectDir',
+        dirname(__DIR__, 2),
+    );
+
+    $container->setParameter(
+        'preCommitConfigPath',
+        dirname(__DIR__) . '/pre-commit-hook.yaml',
+    );
+
+    $container->setParameter('templateVariables', []);
 };

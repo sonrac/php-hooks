@@ -2,12 +2,13 @@
 
 declare(strict_types=1);
 
-namespace App\Tools\Runner;
+namespace Sonrac\Tools\PhpHook\Runner;
 
-use App\Tools\Runner\Enum\ExitCodesEnum;
-use App\Tools\Runner\Process\AbstractProcess;
-use App\Tools\Runner\Process\ProcessTimeMetric;
 use Closure;
+use Sonrac\Tools\PhpHook\Runner\Process\AbstractProcess;
+use Sonrac\Tools\PhpHook\Runner\Process\ProcessTimeMetric;
+use Sonrac\Tools\PhpHook\Runner\Process\ProcessTimeMetricInterface;
+use Symfony\Component\Console\Command\Command;
 
 final class ParallelRunner
 {
@@ -15,16 +16,22 @@ final class ParallelRunner
     /**
      * @var AbstractProcess[]
      */
-    private readonly array $processes;
-    private readonly ProcessTimeMetric $processTimeMetric;
+    private array $processes;
+    private ProcessTimeMetricInterface $processTimeMetric;
+    private ?Closure $finishCallback = null;
+    private ?Closure $startCallback = null;
+    private ?Closure $errorCallback = null;
 
     public function __construct(
-        private readonly ?Closure $startCallback = null,
-        private readonly ?Closure $finishCallback = null,
-        private readonly ?Closure $errorCallback = null,
-        ?ProcessTimeMetric $processTimeMetric = null,
-        AbstractProcess ...$abstractProcess,
+        ?Closure $startCallback = null,
+        ?Closure $finishCallback = null,
+        ?Closure $errorCallback = null,
+        ?ProcessTimeMetricInterface $processTimeMetric = null,
+        AbstractProcess ...$abstractProcess
     ) {
+        $this->errorCallback = $errorCallback;
+        $this->startCallback = $startCallback;
+        $this->finishCallback = $finishCallback;
         $this->processTimeMetric = $processTimeMetric ?? new ProcessTimeMetric();
         $this->processes = $abstractProcess;
 
@@ -39,14 +46,18 @@ final class ParallelRunner
                 $process->clear();
             }
 
-            exit(ExitCodesEnum::generalError->value);
+            exit(Command::FAILURE);
         };
-        pcntl_async_signals(true);
-        pcntl_signal(SIGINT, $sigHandler);
+
+        if (function_exists('pcntl_async_signals')) {
+            @pcntl_async_signals(true);
+            @pcntl_signal(SIGINT, $sigHandler);
+        }
     }
 
     public function run(): RunResult
     {
+        $isOk = true;
         try {
             foreach ($this->processes as $process) {
                 $process->start($this->startCallback);
@@ -73,7 +84,7 @@ final class ParallelRunner
                 return new RunResult($this->processTimeMetric, false, ...$this->processes);
             }
 
-            $this->checkFailedProcesses();
+            $isOk  = $this->checkFailedProcesses();
         } finally {
             foreach ($this->processes as $process) {
                 $process->clear();
@@ -82,16 +93,7 @@ final class ParallelRunner
 
         $this->processTimeMetric->finish();
 
-        return new RunResult($this->processTimeMetric, true, ...$this->processes);
-    }
-
-    private function checkFailedProcesses(): void
-    {
-        foreach ($this->processes as $process) {
-            if ($process->isFailed() && null !== $this->errorCallback) {
-                call_user_func_array($this->errorCallback, [$process]);
-            }
-        }
+        return new RunResult($this->processTimeMetric, $isOk, ...$this->processes);
     }
 
     private function isProcessSuccessfullyFinished(AbstractProcess $process): bool
@@ -105,5 +107,18 @@ final class ParallelRunner
         }
 
         return false;
+    }
+
+    private function checkFailedProcesses(): bool
+    {
+        $isOk = true;
+        foreach ($this->processes as $process) {
+            if ($process->isFailed() && null !== $this->errorCallback) {
+                $isOk = false;
+                call_user_func_array($this->errorCallback, [$process]);
+            }
+        }
+
+        return $isOk;
     }
 }

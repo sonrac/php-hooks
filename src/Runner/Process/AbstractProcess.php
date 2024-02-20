@@ -2,30 +2,41 @@
 
 declare(strict_types=1);
 
-namespace App\Tools\Runner\Process;
+namespace Sonrac\Tools\PhpHook\Runner\Process;
 
-use App\Tools\Runner\Enum\ExitCodesEnum;
 use Closure;
+use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Process\Process;
 
 abstract class AbstractProcess
 {
+    public bool $reverseErrorOutput = false;
+    private ProcessTimeMetricInterface $processTimeMetric;
+    private string $name;
     private Process $process;
     private bool $stopped = false;
+    /**
+     * @var string[]
+     */
+    private array $command;
 
     /**
+     * @param string[] $command
      * @param array<string, string|int|float|bool> $env
      */
     public function __construct(
-        /** @var string[] */
-        private readonly array $command,
+        array $command,
         array $env,
-        public readonly string $name,
-        public readonly ProcessTimeMetricInterface $processTimeMetric,
+        string $name,
+        ProcessTimeMetricInterface $processTimeMetric,
         ?string $cwd = null,
         int $timeout = 30 * 60,
-        public readonly bool $reverseErrorOutput = false,
+        bool $reverseErrorOutput = false
     ) {
+        $this->reverseErrorOutput = $reverseErrorOutput;
+        $this->command = $command;
+        $this->name = $name;
+        $this->processTimeMetric = $processTimeMetric;
         $this->process = new Process(
             $command,
             $cwd,
@@ -73,6 +84,15 @@ abstract class AbstractProcess
         return $this->process->getOutput();
     }
 
+    public function getErrorOutput(): string
+    {
+        if ($this->reverseErrorOutput) {
+            return $this->process->getOutput();
+        }
+
+        return $this->process->getErrorOutput();
+    }
+
     public function wait(): void
     {
         $this->process->wait();
@@ -92,19 +112,7 @@ abstract class AbstractProcess
 
     public function isFailed(): bool
     {
-        return ExitCodesEnum::success !== ExitCodesEnum::getFromCode(
-            true,
-            $this->process->getExitCode(),
-        );
-    }
-
-    public function getErrorOutput(): string
-    {
-        if ($this->reverseErrorOutput) {
-            return $this->process->getOutput();
-        }
-
-        return $this->process->getErrorOutput();
+        return Command::SUCCESS !== $this->process->getExitCode();
     }
 
     /**
@@ -113,5 +121,25 @@ abstract class AbstractProcess
     public function getStartCommand(): array
     {
         return $this->command;
+    }
+
+    public function getProcessTimeMetric(): ProcessTimeMetricInterface
+    {
+        return $this->processTimeMetric;
+    }
+
+    public function getName(): string
+    {
+        return $this->name;
+    }
+
+    public function isReverseErrorOutput(): bool
+    {
+        return $this->reverseErrorOutput;
+    }
+
+    public function isStopped(): bool
+    {
+        return $this->stopped;
     }
 }

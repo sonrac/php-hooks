@@ -2,21 +2,20 @@
 
 declare(strict_types=1);
 
-namespace Sonrac\Tools\PreCommitHook\Commands;
+namespace Sonrac\Tools\PhpHook\Commands;
 
-use Sonrac\Tools\PreCommitHook\PreCommitHookRunner\Config\ConfigBuilder;
-use Sonrac\Tools\PreCommitHook\PreCommitHookRunner\Config\ConfigReader;
-use Sonrac\Tools\PreCommitHook\PreCommitHookRunner\Config\ConfigVariablesFormatter;
-use Sonrac\Tools\PreCommitHook\PreCommitHookRunner\Config\DTO\CommandDto;
-use Sonrac\Tools\PreCommitHook\PreCommitHookRunner\Config\DTO\PreCommitHookDto;
-use Sonrac\Tools\PreCommitHook\PreCommitHookRunner\Config\Env\EnvVariables;
-use Sonrac\Tools\PreCommitHook\PreCommitHookRunner\Definition\CommandDefinition;
-use Sonrac\Tools\PreCommitHook\PreCommitHookRunner\Output\ResultTable;
-use Sonrac\Tools\PreCommitHook\PreCommitHookRunner\Utils\CommandProcess;
-use Sonrac\Tools\PreCommitHook\PreCommitHookRunner\Utils\FileListUtil;
-use Sonrac\Tools\PreCommitHook\Runner\ParallelRunner;
-use Sonrac\Tools\PreCommitHook\Runner\Process\AbstractProcess;
-use Sonrac\Tools\PreCommitHook\Runner\Process\ProcessTimeMetric;
+use InvalidArgumentException;
+use Sonrac\Tools\PhpHook\HookRunner\Config\ConfigBuilder;
+use Sonrac\Tools\PhpHook\HookRunner\Config\DTO\CommandDto;
+use Sonrac\Tools\PhpHook\HookRunner\Config\Env\EnvVariables;
+use Sonrac\Tools\PhpHook\HookRunner\Definition\CommandDefinition;
+use Sonrac\Tools\PhpHook\HookRunner\Output\ResultRenderer;
+use Sonrac\Tools\PhpHook\HookRunner\Utils\CommandProcess;
+use Sonrac\Tools\PhpHook\HookRunner\Utils\FileListUtil;
+use Sonrac\Tools\PhpHook\Runner\ParallelRunner;
+use Sonrac\Tools\PhpHook\Runner\Process\AbstractProcess;
+use Sonrac\Tools\PhpHook\Runner\Process\ProcessTimeMetric;
+use Sonrac\Tools\PhpHook\Runner\Process\ProcessTimeMetricInterface;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Helper\ProgressBar;
 use Symfony\Component\Console\Input\InputArgument;
@@ -25,26 +24,43 @@ use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
 
-final class PreCommitHookCommand extends Command
+final class HookCommand extends Command
 {
     /**
      * @var string[]
      */
     private array $files = [];
     private FileListUtil $flleUtil;
+    private ConfigBuilder $configBuilder;
+    private ProcessTimeMetricInterface $processTimeMetric;
 
-    protected function configure()
+    public function __construct(
+        ConfigBuilder $configBuilder,
+        ProcessTimeMetricInterface $processTimeMetric
+    ) {
+        parent::__construct('hook');
+
+        $this->configBuilder = $configBuilder;
+        $this->processTimeMetric = $processTimeMetric;
+    }
+
+    protected function configure(): void
     {
         parent::configure();
 
-        $this->setName('tools:git:pre-commit');
-        $this->setDescription('Pre-commit hook command');
+        $this->setDescription('Run hook command');
         $this->addOption(
             'config',
             'c',
             InputOption::VALUE_OPTIONAL,
             'Path to the configuration file',
-            dirname(__DIR__, 2) . '/config/pre-commit-hook.yaml',
+            __DIR__ . '/../../config/pre-commit-hook.yaml',
+        );
+        $this->addOption(
+            'project-dir',
+            'p',
+            InputOption::VALUE_OPTIONAL,
+            'Project root dir',
         );
 
         $this->addArgument(
@@ -56,8 +72,6 @@ final class PreCommitHookCommand extends Command
 
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
-        $processTimeMetric = new ProcessTimeMetric();
-
         $style = new SymfonyStyle($input, $output);
         $files = $input->getArgument('files');
 
@@ -83,7 +97,20 @@ final class PreCommitHookCommand extends Command
             return self::INVALID;
         }
 
-        $configDto = $this->prepareConfig($configFile);
+        /** @var ?string $projectDir */
+        $projectDir = $input->getOption('project-dir');
+
+        if (null !== $projectDir) {
+            if (!is_dir($projectDir)) {
+                throw new InvalidArgumentException(
+                    sprintf('Invalid project directory %s', $projectDir),
+                );
+            }
+
+            $this->configBuilder->changeProjectDir($projectDir, $configFile);
+        }
+
+        $configDto = $this->configBuilder->build($configFile);
 
         $style->title($configDto->getName());
         $style->info($configDto->getDescription());
@@ -92,8 +119,9 @@ final class PreCommitHookCommand extends Command
         $preparedProcesses = $this->createProcesses(
             $configDto->getGlobalEnv(),
             $output,
-            ...$configDto->getCommands()
+            ...$configDto->getCommands(),
         );
+
         $progressBar->start(count($preparedProcesses));
 
         $finishCallBack = function (AbstractProcess $process) use ($progressBar): void {
@@ -107,7 +135,7 @@ final class PreCommitHookCommand extends Command
             null,
             $finishCallBack,
             $errorCallback,
-            $processTimeMetric,
+            $this->processTimeMetric,
             ...$preparedProcesses,
         );
 
@@ -116,42 +144,21 @@ final class PreCommitHookCommand extends Command
         $progressBar->finish();
         $output->writeln('');
 
-        $resultTable = new ResultTable($style);
-        /** @var array<string, int> $commandsMap */
-        $commandsMap = [];
-        foreach ($result->getProcesses() as $process) {
-            $commandsMap[$process->getName()] = $process->isFailed() ? self::INVALID : self::SUCCESS;
+        $resultTable = new ResultRenderer($style, ...$result->getProcesses());
+
+        if (!$result->isSuccessfully()) {
+            $resultTable->renderErrors();
         }
 
-        foreach ($result->getProcesses() as $process) {
-            if ($process->isFailed()) {
-                $output->writeln('_________________________________________');
-                $output->writeln('Command name: ' . $process->getName());
-                $output->writeln('Command shell: ' . implode(' ', $process->getStartCommand()));
-                $output->writeln($process->getOutput());
-                $output->writeln($process->getErrorOutput());
-                $output->writeln('_________________________________________');
-            }
-        }
-
-        $resultTable->render($commandsMap);
+        $resultTable->renderResultTable();
         $output->writeln(
             sprintf(
                 'Execution time: %10.5f seconds',
-                $result->getProcessTimeMetric()->getEnded() - $result->getProcessTimeMetric()->getStarted(),
+                $result->getProcessTimeMetric()->executionTime(),
             ),
         );
 
-        return self::SUCCESS;
-    }
-
-    private function prepareConfig(string $configFile): PreCommitHookDto
-    {
-        $configReader = new ConfigReader($configFile, new ConfigVariablesFormatter([]));
-
-        $configBuilder = new ConfigBuilder($configReader);
-
-        return $configBuilder->build();
+        return $result->isSuccessfully() ? self::SUCCESS : self::FAILURE;
     }
 
     /**
@@ -192,7 +199,7 @@ final class PreCommitHookCommand extends Command
     }
 
     /**
-     * @param bool     $includeFiles
+     * @param bool $includeFiles
      * @param string[] $includeFilesPatterns
      *
      * @return string[]
@@ -209,10 +216,10 @@ final class PreCommitHookCommand extends Command
             return $this->files;
         }
 
-        foreach ($includeFilesPatterns as $ext => $includeFilesPattern) {
-            if (!is_string($ext)) {
+        foreach ($includeFilesPatterns as $includeFilesPattern => $ext) {
+            if (!is_string($includeFilesPattern)) {
                 $files = array_merge(
-                    $this->flleUtil->getFilesByExt($includeFilesPattern),
+                    $this->flleUtil->getFilesByExt($ext),
                     $files,
                 );
 

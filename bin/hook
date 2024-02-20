@@ -3,13 +3,22 @@
 
 declare(strict_types=1);
 
-require __DIR__.'/../vendor/autoload.php';
+if (is_file(__DIR__ . '/../autoload.php') === true) {
+    include_once __DIR__ . '/../autoload.php';
+} elseif (is_file(__DIR__ . '/../vendor/autoload.php') === true) {
+    include_once __DIR__ . '/../vendor/autoload.php';
+} else {
+    include_once __DIR__ . '/../../../autoload.php';
+}
 
-use Sonrac\Tools\PreCommitHook\Commands\HookCommand;
 use Symfony\Component\Console\Application;
+use Symfony\Component\Console\Command\Command;
+
+/** @var Command[] $commands */
+$commands = (require __DIR__ . '/../config/compile_di.php')();
 
 $application = new Application();
 
-$application->add(new HookCommand());
+$application->addCommands($commands);
 
 $application->run();

@@ -3,4 +3,9 @@ description: Pre-commit hook parallel execution
 globalEnvFile: null
 globalEnv:
   XDEBUG_MODE: off
-commands: false
+commands:
+  phpstan:
+    cmd: null
+    includeFiles: true
+    reverseOutput: true
+
