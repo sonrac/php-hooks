@@ -4,6 +4,12 @@ The package is a utility for git hooks configuration to speed up the work of git
 
 Hook commands are launched in parallel and due to parallelization the hook works faster.
 
+## Installation
+
+```shell
+composer require sonrac/git-php-hook-runner
+```
+
 ## Usages
 
 * Copy config

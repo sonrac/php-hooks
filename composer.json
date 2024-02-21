@@ -1,5 +1,5 @@
 {
-    "name": "sonrac/php-pre-commit-hook",
+    "name": "sonrac/git-php-hook-runner",
     "bin": [
         "bin/hook"
     ],
