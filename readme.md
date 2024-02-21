@@ -89,7 +89,7 @@ if you need commit without hook runner checks
 
 ![img.png](docs/img/disable-in-modal-dialogue.png)
 
-## Usefully Links
+## Useful Links
 
 * [Hook runner overview](docs/overview.md)
 * [Hook runner config](docs/config-options.md)
