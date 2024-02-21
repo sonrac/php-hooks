@@ -50,7 +50,7 @@ final class ResultTable
         if ($hasErrors) {
             $this->style->error('See errors below this result table');
         } else {
-            $this->style->success('Pre hook commit run successfully');
+            $this->style->success('Hook run successfully');
         }
     }
 

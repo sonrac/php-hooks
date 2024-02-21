@@ -15,7 +15,7 @@ final class ConfigBuilderTest extends TestCase
     {
         $configBuilder = new ConfigBuilder(
             new ConfigReader(
-                __DIR__ . '/../../config/pre-commit-hook.yaml',
+                __DIR__ . '/../../config/hook.yaml',
                 new ConfigVariablesFormatter(),
             ),
         );

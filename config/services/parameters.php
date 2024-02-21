@@ -12,7 +12,7 @@ return static function (ContainerBuilder $container): void {
 
     $container->setParameter(
         'preCommitConfigPath',
-        dirname(__DIR__) . '/pre-commit-hook.yaml',
+        dirname(__DIR__) . '/hook.yaml',
     );
 
     $container->setParameter('templateVariables', []);
